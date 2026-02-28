@@ -10,6 +10,8 @@ val releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
 val releaseStorePassword = System.getenv("ANDROID_STORE_PASSWORD")
 val releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
 val releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+val appVersionName = System.getenv("APP_VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "1.0.0"
+val appVersionCode = System.getenv("APP_VERSION_CODE")?.toIntOrNull() ?: 1
 val hasReleaseSigning =
   !releaseKeystorePath.isNullOrBlank() &&
     !releaseStorePassword.isNullOrBlank() &&
@@ -24,8 +26,8 @@ android {
     applicationId = "com.opsecapp.app"
     minSdk = 26
     targetSdk = 35
-    versionCode = 1
-    versionName = "1.0.0"
+    versionCode = appVersionCode
+    versionName = appVersionName
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables {
