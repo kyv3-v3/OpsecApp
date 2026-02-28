@@ -1,0 +1,5 @@
+<resources>
+  <string name="app_name">Opsec Catalog</string>
+  <string name="catalog_sync_channel">Catalog Sync</string>
+  <string name="catalog_sync_channel_desc">Notifications for catalog updates</string>
+</resources>

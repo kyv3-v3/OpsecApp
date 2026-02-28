@@ -1,0 +1,14 @@
+# Gradle / Android Studio
+.gradle/
+.kts-cache/
+.idea/
+*.iml
+
+# Local SDK config
+local.properties
+
+# Build outputs
+**/build/
+
+# Native crash logs
+*.hprof
