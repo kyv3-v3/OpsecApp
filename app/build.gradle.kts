@@ -1,3 +1,5 @@
+import org.gradle.api.GradleException
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.android)
@@ -17,6 +19,16 @@ val hasReleaseSigning =
     !releaseStorePassword.isNullOrBlank() &&
     !releaseKeyAlias.isNullOrBlank() &&
     !releaseKeyPassword.isNullOrBlank()
+val isReleaseBuildRequested = gradle.startParameter.taskNames.any { task ->
+  task.contains("release", ignoreCase = true)
+}
+
+if (isReleaseBuildRequested && !hasReleaseSigning) {
+  throw GradleException(
+    "Release builds require signing secrets. Set ANDROID_KEYSTORE_PATH, ANDROID_STORE_PASSWORD, " +
+      "ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD."
+  )
+}
 
 android {
   namespace = "com.opsecapp.app"
@@ -71,11 +83,7 @@ android {
   buildTypes {
     release {
       isMinifyEnabled = false
-      signingConfig = if (hasReleaseSigning) {
-        signingConfigs.getByName("release")
-      } else {
-        signingConfigs.getByName("debug")
-      }
+      signingConfig = signingConfigs.getByName("release")
     }
     debug {
       isMinifyEnabled = false
@@ -139,6 +147,8 @@ dependencies {
   testImplementation(libs.mockk)
   testImplementation(libs.truth)
   testImplementation(libs.turbine)
+  testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(libs.okhttp.mockwebserver)
 
   androidTestImplementation(libs.androidx.test.ext.junit)
   androidTestImplementation(libs.androidx.test.espresso.core)

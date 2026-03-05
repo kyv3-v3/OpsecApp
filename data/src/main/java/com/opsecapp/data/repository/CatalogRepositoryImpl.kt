@@ -1,6 +1,7 @@
 package com.opsecapp.data.repository
 
 import com.opsecapp.data.local.dao.CatalogDao
+import com.opsecapp.data.local.entity.CatalogMetaEntity
 import com.opsecapp.data.mapper.toDomain
 import com.opsecapp.data.mapper.toPersistable
 import com.opsecapp.domain.model.CatalogCategory
@@ -17,7 +18,9 @@ import com.opsecapp.security.CatalogSignatureVerifier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import java.time.Instant
 
 class CatalogRepositoryImpl(
   private val dao: CatalogDao,
@@ -90,7 +93,7 @@ class CatalogRepositoryImpl(
   override suspend fun syncCatalog(force: Boolean): TrustStatus {
     val baseUrl = settingsRepository.observeCatalogBaseUrl().first()
 
-    return runCatching {
+    return try {
       val payload = remoteDataSource.fetch(baseUrl)
 
       val trust = signatureVerifier.verify(
@@ -99,12 +102,14 @@ class CatalogRepositoryImpl(
       )
 
       if (!trust.trusted) {
-        return when (trust.failure) {
+        val trustStatus = when (trust.failure) {
           com.opsecapp.security.CatalogTrustFailure.INVALID_PUBLIC_KEY_FINGERPRINT -> TrustStatus.INVALID_FINGERPRINT
           com.opsecapp.security.CatalogTrustFailure.INVALID_SIGNATURE,
           com.opsecapp.security.CatalogTrustFailure.INVALID_SIGNATURE_ENCODING -> TrustStatus.INVALID_SIGNATURE
           null -> TrustStatus.UNTRUSTED
         }
+        persistTrustStatus(trustStatus, baseUrl)
+        return trustStatus
       }
 
       val dto = json.decodeFromString<CatalogDto>(payload.catalogBytes.decodeToString())
@@ -120,11 +125,40 @@ class CatalogRepositoryImpl(
       )
 
       TrustStatus.TRUSTED
-    }.getOrElse { error ->
-      when (error) {
-        is kotlinx.serialization.SerializationException -> TrustStatus.PARSE_ERROR
+    } catch (error: Throwable) {
+      val status = when (error) {
+        is SerializationException -> TrustStatus.PARSE_ERROR
         else -> TrustStatus.NETWORK_ERROR
       }
+      persistTrustStatus(status, baseUrl)
+      status
     }
+  }
+
+  private suspend fun persistTrustStatus(status: TrustStatus, sourceUrl: String) {
+    val existingMeta = dao.observeMeta().first()
+    if (existingMeta != null) {
+      dao.insertMeta(
+        existingMeta.copy(
+          trustStatus = status.name,
+          signed = status == TrustStatus.TRUSTED
+        )
+      )
+      return
+    }
+
+    val now = Instant.now().toString()
+    dao.insertMeta(
+      CatalogMetaEntity(
+        schemaVersion = "unknown",
+        generatedAt = now,
+        lastSyncedFromSourceAt = now,
+        sourceUrl = sourceUrl,
+        sourceLanguage = "unknown",
+        extractor = "unknown",
+        signed = false,
+        trustStatus = status.name
+      )
+    )
   }
 }

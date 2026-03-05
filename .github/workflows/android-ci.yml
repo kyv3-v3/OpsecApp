@@ -33,8 +33,16 @@ jobs:
           yes | sdkmanager --licenses >/dev/null
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Build + unit tests
-        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
+      - name: Build + unit tests (all modules)
+        run: |
+          ./gradlew \
+            :app:assembleDebug \
+            :app:testDebugUnitTest \
+            :data:testDebugUnitTest \
+            :domain:testDebugUnitTest \
+            :network:testDebugUnitTest \
+            :security:testDebugUnitTest \
+            --no-daemon
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

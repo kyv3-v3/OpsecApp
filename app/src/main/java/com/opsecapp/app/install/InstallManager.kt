@@ -45,14 +45,16 @@ class InstallManager(
     }
 
     val fdroidLink = item.upstreamLinks.firstOrNull { it.type == UpstreamLinkType.FDROID }
-    val packageId = item.packageId
+    val packageId = item.packageId ?: extractPackageIdFromFdroidUrl(fdroidLink?.url)
     val uri = when {
-      fdroidLink != null -> Uri.parse(fdroidLink.url)
       !packageId.isNullOrBlank() -> Uri.parse("fdroid.app://details?id=$packageId")
+      fdroidLink != null -> Uri.parse(fdroidLink.url)
       else -> return InstallResult.Error("No F-Droid package reference is available for this item.")
     }
 
-    val intent = Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val intent = Intent(Intent.ACTION_VIEW, uri)
+      .setPackage(FDROID_PACKAGE)
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     return try {
       context.startActivity(intent)
       InstallResult.FdroidLaunched
@@ -74,10 +76,6 @@ class InstallManager(
 
     if (parsed.scheme != "https") {
       return@withContext InstallResult.Error("Blocked non-HTTPS install URL.")
-    }
-
-    if (link.type == UpstreamLinkType.OTHER) {
-      return@withContext InstallResult.Error("Blocked untrusted mirror URL.")
     }
 
     val apkFile = File(context.cacheDir.resolve("apks"), "download.apk").apply {
@@ -143,6 +141,18 @@ class InstallManager(
     }
   }
 
+  fun openUpstreamUrl(url: String, message: String): InstallResult {
+    val parsed = runCatching { Uri.parse(url) }.getOrNull()
+      ?: return InstallResult.Error("Invalid upstream URL.")
+
+    if (parsed.scheme != "https") {
+      return InstallResult.Error("Blocked non-HTTPS upstream URL.")
+    }
+
+    val intent = Intent(Intent.ACTION_VIEW, parsed).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    return InstallResult.NeedsUserAction(message = message, actionIntent = intent)
+  }
+
   private fun downloadFile(url: String, destination: File) {
     val request = Request.Builder().url(url).get().build()
     client.newCall(request).execute().use { response ->
@@ -156,7 +166,15 @@ class InstallManager(
     }
   }
 
+  private fun extractPackageIdFromFdroidUrl(url: String?): String? {
+    if (url.isNullOrBlank()) return null
+    val match = FDROID_PACKAGE_REGEX.find(url) ?: return null
+    return match.groupValues.getOrNull(1)?.takeIf { it.isNotBlank() }
+  }
+
   companion object {
     private const val FDROID_PACKAGE = "org.fdroid.fdroid"
+    private val FDROID_PACKAGE_REGEX =
+      Regex("""https://f-droid\.org/(?:[a-z]{2}/)?packages/([^/]+)/?""", RegexOption.IGNORE_CASE)
   }
 }

@@ -21,7 +21,7 @@ class ObserveHomeUseCase(
       val lastSyncedText = meta?.lastSyncedFromSourceAt
         ?.atZone(ZoneId.systemDefault())
         ?.format(formatter)
-        ?: "Never"
+        ?: ""
 
       HomeState(
         categories = categories,

@@ -1,6 +1,5 @@
 package com.opsecapp.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -10,107 +9,127 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val DarkColors = darkColorScheme(
-  primary = Color(0xFF7FE0B6),
-  onPrimary = Color(0xFF003826),
-  primaryContainer = Color(0xFF045139),
-  onPrimaryContainer = Color(0xFFA6F6CF),
-  secondary = Color(0xFFA3CCE3),
-  onSecondary = Color(0xFF033548),
-  secondaryContainer = Color(0xFF1D4B60),
-  onSecondaryContainer = Color(0xFFD1E9F6),
-  tertiary = Color(0xFFE8C17A),
-  onTertiary = Color(0xFF432C00),
-  background = Color(0xFF0D1512),
-  onBackground = Color(0xFFE4EFEA),
-  surface = Color(0xFF101A16),
-  onSurface = Color(0xFFE4EFEA),
-  surfaceVariant = Color(0xFF2C3732),
-  onSurfaceVariant = Color(0xFFC0CCC6),
-  error = Color(0xFFFFB4AB),
-  onError = Color(0xFF690005)
+  primary = Color(0xFF2FFFA2),
+  onPrimary = Color(0xFF001A12),
+  primaryContainer = Color(0xFF0C3D2A),
+  onPrimaryContainer = Color(0xFF94FFCF),
+  secondary = Color(0xFF2DDAFF),
+  onSecondary = Color(0xFF00151C),
+  secondaryContainer = Color(0xFF003E4E),
+  onSecondaryContainer = Color(0xFFA8F1FF),
+  tertiary = Color(0xFFFF477E),
+  onTertiary = Color(0xFF2A0012),
+  tertiaryContainer = Color(0xFF5F1734),
+  onTertiaryContainer = Color(0xFFFFB9CE),
+  background = Color(0xFF06080D),
+  onBackground = Color(0xFFE2F5EC),
+  surface = Color(0xFF0C1018),
+  onSurface = Color(0xFFE2F5EC),
+  surfaceVariant = Color(0xFF131A24),
+  onSurfaceVariant = Color(0xFF9DB3AB),
+  error = Color(0xFFFF5A5A),
+  onError = Color(0xFF2B0000)
 )
 
 private val LightColors = lightColorScheme(
-  primary = Color(0xFF145C43),
+  primary = Color(0xFF00A266),
   onPrimary = Color(0xFFFFFFFF),
-  primaryContainer = Color(0xFF9EF2C9),
-  onPrimaryContainer = Color(0xFF002115),
-  secondary = Color(0xFF355F74),
+  primaryContainer = Color(0xFFB8F9DE),
+  onPrimaryContainer = Color(0xFF002014),
+  secondary = Color(0xFF007FA0),
   onSecondary = Color(0xFFFFFFFF),
-  secondaryContainer = Color(0xFFB9E6FF),
-  onSecondaryContainer = Color(0xFF001F2C),
-  tertiary = Color(0xFF6A571D),
+  secondaryContainer = Color(0xFFC4F0FF),
+  onSecondaryContainer = Color(0xFF001F28),
+  tertiary = Color(0xFFB7265A),
   onTertiary = Color(0xFFFFFFFF),
-  tertiaryContainer = Color(0xFFF4DE9D),
-  onTertiaryContainer = Color(0xFF221B00),
-  background = Color(0xFFF3F8F5),
-  onBackground = Color(0xFF161D1A),
-  surface = Color(0xFFF7FCF9),
-  onSurface = Color(0xFF161D1A),
-  surfaceVariant = Color(0xFFD8E5DE),
-  onSurfaceVariant = Color(0xFF3C4943),
+  tertiaryContainer = Color(0xFFFFD6E3),
+  onTertiaryContainer = Color(0xFF390015),
+  background = Color(0xFFEAF2EF),
+  onBackground = Color(0xFF0A1814),
+  surface = Color(0xFFF4FAF8),
+  onSurface = Color(0xFF0A1814),
+  surfaceVariant = Color(0xFFD4E0DB),
+  onSurfaceVariant = Color(0xFF34423E),
   error = Color(0xFFBA1A1A),
   onError = Color(0xFFFFFFFF)
 )
 
+private val DisplayFamily = FontFamily.Monospace
+private val BodyFamily = FontFamily.SansSerif
+
 private val OpsecTypography = Typography(
   headlineMedium = TextStyle(
+    fontFamily = DisplayFamily,
     fontWeight = FontWeight.SemiBold,
-    fontSize = 30.sp,
-    lineHeight = 36.sp
+    letterSpacing = 1.2.sp,
+    fontSize = 32.sp,
+    lineHeight = 38.sp
   ),
   headlineSmall = TextStyle(
+    fontFamily = DisplayFamily,
     fontWeight = FontWeight.SemiBold,
+    letterSpacing = 1.sp,
     fontSize = 24.sp,
     lineHeight = 30.sp
   ),
   titleLarge = TextStyle(
+    fontFamily = DisplayFamily,
     fontWeight = FontWeight.SemiBold,
+    letterSpacing = 0.8.sp,
     fontSize = 20.sp,
     lineHeight = 26.sp
   ),
   titleMedium = TextStyle(
+    fontFamily = DisplayFamily,
     fontWeight = FontWeight.Medium,
-    fontSize = 17.sp,
-    lineHeight = 23.sp
+    letterSpacing = 0.5.sp,
+    fontSize = 16.sp,
+    lineHeight = 22.sp
   ),
   bodyLarge = TextStyle(
+    fontFamily = BodyFamily,
     fontWeight = FontWeight.Normal,
     fontSize = 16.sp,
-    lineHeight = 24.sp
+    lineHeight = 23.sp
   ),
   bodyMedium = TextStyle(
+    fontFamily = BodyFamily,
     fontWeight = FontWeight.Normal,
     fontSize = 14.sp,
-    lineHeight = 20.sp
+    lineHeight = 21.sp
   ),
   labelLarge = TextStyle(
+    fontFamily = DisplayFamily,
     fontWeight = FontWeight.Medium,
+    letterSpacing = 1.sp,
     fontSize = 13.sp,
     lineHeight = 18.sp
   ),
   labelMedium = TextStyle(
+    fontFamily = DisplayFamily,
     fontWeight = FontWeight.Medium,
+    letterSpacing = 0.8.sp,
     fontSize = 12.sp,
     lineHeight = 16.sp
   )
 )
 
 private val OpsecShapes = Shapes(
-  extraSmall = RoundedCornerShape(8.dp),
-  small = RoundedCornerShape(12.dp),
-  medium = RoundedCornerShape(18.dp),
-  large = RoundedCornerShape(24.dp)
+  extraSmall = RoundedCornerShape(6.dp),
+  small = RoundedCornerShape(10.dp),
+  medium = RoundedCornerShape(16.dp),
+  large = RoundedCornerShape(20.dp)
 )
 
 @Composable
 fun OpsecTheme(
-  darkTheme: Boolean = isSystemInDarkTheme(),
+  darkTheme: Boolean = true,
   content: @Composable () -> Unit
 ) {
   MaterialTheme(

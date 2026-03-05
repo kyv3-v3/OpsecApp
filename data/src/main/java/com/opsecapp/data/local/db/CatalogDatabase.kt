@@ -2,6 +2,7 @@ package com.opsecapp.data.local.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.SkipQueryVerification
 import com.opsecapp.data.local.dao.CatalogDao
 import com.opsecapp.data.local.entity.CatalogMetaEntity
 import com.opsecapp.data.local.entity.CategoryEntity
@@ -10,6 +11,7 @@ import com.opsecapp.data.local.entity.ItemEntity
 import com.opsecapp.data.local.entity.ItemFtsEntity
 import com.opsecapp.data.local.entity.ItemLinkEntity
 
+@SkipQueryVerification
 @Database(
   entities = [
     CategoryEntity::class,

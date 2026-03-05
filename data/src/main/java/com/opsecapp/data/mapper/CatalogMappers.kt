@@ -152,7 +152,7 @@ fun CatalogDto.toPersistable(trustStatus: TrustStatus): PersistableCatalog {
 }
 
 private fun String.toSourceConfidence(): SourceConfidence {
-  return when (uppercase()) {
+  return when (normalizedEnumKey()) {
     "HIGH" -> SourceConfidence.HIGH
     "MEDIUM" -> SourceConfidence.MEDIUM
     else -> SourceConfidence.LOW
@@ -160,8 +160,9 @@ private fun String.toSourceConfidence(): SourceConfidence {
 }
 
 private fun String.toInstallType(): InstallType {
-  return when (uppercase()) {
+  return when (normalizedEnumKey()) {
     "FDROID" -> InstallType.FDROID
+    "F_DROID" -> InstallType.FDROID
     "GITHUB_APK" -> InstallType.GITHUB_APK
     "OFFICIAL_APK" -> InstallType.OFFICIAL_APK
     "OFFICIAL_SITE" -> InstallType.OFFICIAL_SITE
@@ -171,8 +172,9 @@ private fun String.toInstallType(): InstallType {
 }
 
 private fun String.toUpstreamLinkType(): UpstreamLinkType {
-  return when (uppercase()) {
+  return when (normalizedEnumKey()) {
     "FDROID" -> UpstreamLinkType.FDROID
+    "F_DROID" -> UpstreamLinkType.FDROID
     "GITHUB" -> UpstreamLinkType.GITHUB
     "OFFICIAL" -> UpstreamLinkType.OFFICIAL
     else -> UpstreamLinkType.OTHER
@@ -181,4 +183,11 @@ private fun String.toUpstreamLinkType(): UpstreamLinkType {
 
 private fun String.toTrustStatus(): TrustStatus {
   return runCatching { TrustStatus.valueOf(this) }.getOrElse { TrustStatus.UNTRUSTED }
+}
+
+private fun String.normalizedEnumKey(): String {
+  return trim()
+    .replace('-', '_')
+    .replace(' ', '_')
+    .uppercase()
 }

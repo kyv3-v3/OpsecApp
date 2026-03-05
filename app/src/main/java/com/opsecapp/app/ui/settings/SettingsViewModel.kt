@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.net.URI
 
 data class AvailableAppUpdate(
   val tagName: String,
@@ -32,6 +33,8 @@ data class AvailableAppUpdate(
 
 data class SettingsUiState(
   val catalogBaseUrl: String = "",
+  val catalogUrlMessage: String? = null,
+  val catalogUrlMessageIsError: Boolean = false,
   val meta: CatalogMeta? = null,
   val trustStatus: TrustStatus = TrustStatus.UNTRUSTED,
   val isSyncingCatalog: Boolean = false,
@@ -50,6 +53,8 @@ class SettingsViewModel(
   private data class OperationState(
     val isSyncingCatalog: Boolean = false,
     val isCheckingAppUpdate: Boolean = false,
+    val catalogUrlMessage: String? = null,
+    val catalogUrlMessageIsError: Boolean = false,
     val statusMessage: String? = null,
     val availableAppUpdate: AvailableAppUpdate? = null
   )
@@ -65,6 +70,8 @@ class SettingsViewModel(
   ) { catalogUrl, meta, opState ->
     SettingsUiState(
       catalogBaseUrl = catalogUrl,
+      catalogUrlMessage = opState.catalogUrlMessage,
+      catalogUrlMessageIsError = opState.catalogUrlMessageIsError,
       meta = meta,
       trustStatus = meta?.trustStatus ?: TrustStatus.UNTRUSTED,
       isSyncingCatalog = opState.isSyncingCatalog,
@@ -76,7 +83,26 @@ class SettingsViewModel(
 
   fun saveCatalogBaseUrl(url: String) {
     viewModelScope.launch {
-      settingsRepository.setCatalogBaseUrl(url)
+      when (val validation = validateCatalogBaseUrl(url)) {
+        is CatalogUrlValidation.Valid -> {
+          settingsRepository.setCatalogBaseUrl(validation.normalizedUrl)
+          operationState.update {
+            it.copy(
+              catalogUrlMessage = CATALOG_URL_SAVED,
+              catalogUrlMessageIsError = false
+            )
+          }
+        }
+
+        is CatalogUrlValidation.Invalid -> {
+          operationState.update {
+            it.copy(
+              catalogUrlMessage = validation.message,
+              catalogUrlMessageIsError = true
+            )
+          }
+        }
+      }
     }
   }
 
@@ -179,5 +205,57 @@ class SettingsViewModel(
       )
       _events.emit(result)
     }
+  }
+
+  private fun validateCatalogBaseUrl(rawUrl: String): CatalogUrlValidation {
+    val candidate = rawUrl.trim()
+    if (candidate.isBlank()) {
+      return CatalogUrlValidation.Invalid(CATALOG_URL_EMPTY)
+    }
+
+    val uri = runCatching { URI(candidate) }.getOrNull()
+      ?: return CatalogUrlValidation.Invalid(CATALOG_URL_INVALID_FORMAT)
+
+    val scheme = uri.scheme?.lowercase()
+    if (scheme != "https") {
+      return CatalogUrlValidation.Invalid(CATALOG_URL_HTTPS_REQUIRED)
+    }
+
+    if (uri.host.isNullOrBlank()) {
+      return CatalogUrlValidation.Invalid(CATALOG_URL_INVALID_HOST)
+    }
+
+    if (!uri.query.isNullOrBlank() || !uri.fragment.isNullOrBlank()) {
+      return CatalogUrlValidation.Invalid(CATALOG_URL_NO_QUERY_OR_FRAGMENT)
+    }
+
+    val pathLower = uri.path.orEmpty().lowercase()
+    if (pathLower.endsWith("/catalog.json") || pathLower.endsWith("/catalog.sig")) {
+      return CatalogUrlValidation.Invalid(CATALOG_URL_EXPECTS_BASE_DIRECTORY)
+    }
+
+    return CatalogUrlValidation.Valid(candidate.trimEnd('/'))
+  }
+
+  private sealed interface CatalogUrlValidation {
+    data class Valid(val normalizedUrl: String) : CatalogUrlValidation
+    data class Invalid(val message: String) : CatalogUrlValidation
+  }
+
+  private companion object {
+    private const val CATALOG_URL_EMPTY =
+      "Catalog URL cannot be empty."
+    private const val CATALOG_URL_INVALID_FORMAT =
+      "Catalog URL is not a valid absolute URL."
+    private const val CATALOG_URL_HTTPS_REQUIRED =
+      "Catalog URL must use HTTPS."
+    private const val CATALOG_URL_INVALID_HOST =
+      "Catalog URL host is invalid."
+    private const val CATALOG_URL_NO_QUERY_OR_FRAGMENT =
+      "Catalog URL must not include query parameters or fragments."
+    private const val CATALOG_URL_EXPECTS_BASE_DIRECTORY =
+      "Use the catalog base directory URL, not catalog.json/catalog.sig directly."
+    private const val CATALOG_URL_SAVED =
+      "Catalog source URL saved."
   }
 }

@@ -2,4 +2,77 @@
   <string name="app_name">Opsec Catalog</string>
   <string name="catalog_sync_channel">Catalog Sync</string>
   <string name="catalog_sync_channel_desc">Notifications for catalog updates</string>
+
+  <string name="common_back">Back</string>
+  <string name="common_never">Never</string>
+  <string name="common_not_available">-</string>
+
+  <string name="home_last_synced">Last synced from source on %1$s</string>
+  <string name="home_categories">Categories</string>
+  <string name="home_browse">Browse</string>
+  <string name="home_highlights">Recommended Highlights</string>
+  <string name="home_trust_badge">Trust: %1$s</string>
+  <string name="home_action_search">Search</string>
+  <string name="home_action_settings">Settings</string>
+  <string name="home_snackbar_catalog_updated">Catalog updated and signature verified.</string>
+  <string name="home_snackbar_invalid_signature">Catalog rejected: invalid signature.</string>
+  <string name="home_snackbar_invalid_fingerprint">Catalog rejected: pinned key fingerprint mismatch.</string>
+  <string name="home_snackbar_network_error">Catalog sync failed due to network error.</string>
+  <string name="home_snackbar_parse_error">Catalog sync failed: parser/schema mismatch.</string>
+  <string name="home_snackbar_untrusted">Catalog is currently untrusted.</string>
+  <string name="home_snackbar_refresh_failed">Catalog refresh failed unexpectedly.</string>
+
+  <string name="search_title">Search</string>
+  <string name="search_query_label">Search exact title/description</string>
+  <string name="search_source_confidence">Source confidence</string>
+  <string name="search_confidence_any">Any confidence</string>
+  <string name="search_confidence_high">High</string>
+  <string name="search_confidence_medium">Medium</string>
+  <string name="search_confidence_low">Low</string>
+  <string name="search_install_type">Install type</string>
+  <string name="search_install_any">Any install</string>
+  <string name="search_install_fdroid">F-Droid</string>
+  <string name="search_install_github_apk">GitHub APK</string>
+  <string name="search_install_official_apk">Official APK</string>
+  <string name="search_item_meta">%1$s • %2$s</string>
+
+  <string name="category_fallback_title">Category</string>
+
+  <string name="detail_title">Details</string>
+  <string name="detail_item_unavailable">Item unavailable</string>
+  <string name="detail_trust_verified">Trust badge: Signed catalog verified</string>
+  <string name="detail_install_open_upstream">Install / Open Upstream</string>
+  <string name="detail_install_constraints">Install constraints</string>
+  <string name="detail_install_constraints_body">Android consumer devices do not permit silent installs/updates for regular apps. The system Package Installer always requires user confirmation.</string>
+  <string name="detail_source_links">Source links</string>
+  <string name="detail_link_missing_metadata">No hash/cert metadata available. Verify upstream integrity manually.</string>
+  <string name="detail_quick_actions">Quick actions</string>
+  <string name="detail_copy_package_id">Copy package ID</string>
+  <string name="detail_copy_sha256">Copy SHA-256</string>
+  <string name="detail_copy_signer_sha256">Copy signer SHA-256</string>
+  <string name="detail_open_github_repo">Open GitHub repo</string>
+  <string name="detail_open_latest_release">Open latest release</string>
+  <string name="detail_copied_package_id">Package ID copied.</string>
+  <string name="detail_copied_sha256">SHA-256 copied.</string>
+  <string name="detail_copied_signer_sha256">Signer SHA-256 copied.</string>
+
+  <string name="settings_title">Settings</string>
+  <string name="settings_catalog_url_label">Catalog base URL</string>
+  <string name="settings_catalog_url_support">HTTPS endpoint containing catalog.json and catalog.sig</string>
+  <string name="settings_save_url">Save URL</string>
+  <string name="settings_syncing_catalog">Syncing catalog...</string>
+  <string name="settings_update_catalog">Update catalog</string>
+  <string name="settings_checking_updates">Checking app updates...</string>
+  <string name="settings_check_updates">Check app updates</string>
+  <string name="settings_latest_release">Latest app release: %1$s%2$s</string>
+  <string name="settings_release_published_suffix"> (%1$s)</string>
+  <string name="settings_install_app_update">Install app update</string>
+  <string name="settings_open_release_page">Open release page</string>
+  <string name="settings_trust_status">Trust status: %1$s</string>
+  <string name="settings_last_synced">Last synced from source: %1$s</string>
+  <string name="settings_schema">Schema: %1$s</string>
+
+  <string name="snackbar_opened_fdroid">Opened F-Droid.</string>
+  <string name="snackbar_fdroid_missing">F-Droid is not installed.</string>
+  <string name="snackbar_opened_installer">Opened package installer.</string>
 </resources>
