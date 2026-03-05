@@ -1,5 +1,3 @@
-import org.gradle.api.GradleException
-
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.android)
@@ -19,16 +17,6 @@ val hasReleaseSigning =
     !releaseStorePassword.isNullOrBlank() &&
     !releaseKeyAlias.isNullOrBlank() &&
     !releaseKeyPassword.isNullOrBlank()
-val isReleaseBuildRequested = gradle.startParameter.taskNames.any { task ->
-  task.contains("release", ignoreCase = true)
-}
-
-if (isReleaseBuildRequested && !hasReleaseSigning) {
-  throw GradleException(
-    "Release builds require signing secrets. Set ANDROID_KEYSTORE_PATH, ANDROID_STORE_PASSWORD, " +
-      "ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD."
-  )
-}
 
 android {
   namespace = "com.opsecapp.app"
@@ -83,7 +71,9 @@ android {
   buildTypes {
     release {
       isMinifyEnabled = false
-      signingConfig = signingConfigs.getByName("release")
+      if (hasReleaseSigning) {
+        signingConfig = signingConfigs.getByName("release")
+      }
     }
     debug {
       isMinifyEnabled = false
