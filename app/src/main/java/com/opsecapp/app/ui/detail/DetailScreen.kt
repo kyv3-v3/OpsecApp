@@ -226,7 +226,7 @@ fun DetailScreen(
         }
 
         item {
-          if (selectedItem.hasDirectApkLink) {
+          if (state.hasDirectApkLink) {
             Button(onClick = onInstallDirect, modifier = Modifier.fillMaxWidth()) {
               Text(stringResource(R.string.detail_install_direct))
             }
