@@ -110,17 +110,24 @@ class InstallManager(
       return@withContext InstallResult.Error("Downloaded APK package name is missing.")
     }
 
+    val isSelfUpdate = !expectedPackageName.isNullOrBlank() && expectedPackageName == context.packageName
     val installerWarnings = mutableListOf<String>()
 
     if (!expectedPackageName.isNullOrBlank() && apkPackageName != expectedPackageName) {
+      if (isSelfUpdate) {
+        apkFile.delete()
+        return@withContext InstallResult.Error(
+          "Downloaded update APK package '$apkPackageName' does not match this app package '$expectedPackageName'. The published release asset is invalid."
+        )
+      }
       installerWarnings += "Downloaded APK package '$apkPackageName' does not match expected package '$expectedPackageName'."
     }
 
-    if (!expectedPackageName.isNullOrBlank()
-      && expectedPackageName == context.packageName
-      && !isSignedWithCurrentPackage(apkPackageInfo)
-    ) {
-      installerWarnings += "Downloaded APK is signed with a different certificate than the currently installed app."
+    if (isSelfUpdate && !isSignedWithCurrentPackage(apkPackageInfo)) {
+      apkFile.delete()
+      return@withContext InstallResult.Error(
+        "Downloaded update APK is unsigned or signed with a different certificate than the installed app. The published release asset is invalid."
+      )
     }
 
     link.expectedSha256?.let { expected ->

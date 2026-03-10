@@ -57,13 +57,17 @@ jobs:
         run: |
           if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_STORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
-            echo "mode=signed" >> "$GITHUB_OUTPUT"
             echo "Signing mode: signed"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "mode=unsigned" >> "$GITHUB_OUTPUT"
-            echo "Signing secrets missing or incomplete: building unsigned release APK."
+            echo "Signing secrets missing or incomplete."
           fi
+
+      - name: Require release signing
+        if: ${{ steps.signing.outputs.enabled != 'true' }}
+        run: |
+          echo "Missing Android signing secrets. Refusing to publish an unsigned release APK."
+          exit 1
 
       - name: Prepare keystore
         if: ${{ steps.signing.outputs.enabled == 'true' }}
@@ -82,19 +86,26 @@ jobs:
           APP_VERSION_CODE: ${{ steps.version.outputs.version_code }}
         run: ./gradlew :app:assembleRelease --no-daemon
 
+      - name: Verify release APK signature
+        run: |
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          APKSIGNER="${ANDROID_SDK_ROOT}/build-tools/35.0.0/apksigner"
+          if [ ! -f "$APK_PATH" ]; then
+            echo "Signed release APK not found at $APK_PATH"
+            exit 1
+          fi
+          if [ ! -x "$APKSIGNER" ]; then
+            echo "apksigner not found at $APKSIGNER"
+            exit 1
+          fi
+          "$APKSIGNER" verify --print-certs "$APK_PATH"
+
       - name: Prepare release assets
         id: assets
         run: |
           APK_PATH="app/build/outputs/apk/release/app-release.apk"
           if [ ! -f "$APK_PATH" ]; then
-            APK_PATH="app/build/outputs/apk/release/app-release-unsigned.apk"
-          fi
-          if [ ! -f "$APK_PATH" ]; then
-            APK_PATH=$(ls -1 app/build/outputs/apk/release/*.apk 2>/dev/null | head -n 1 || true)
-          fi
-          if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
-            echo "APK not found."
-            ls -la app/build/outputs/apk/release || true
+            echo "Signed release APK not found."
             exit 1
           fi
           VERSION="${{ steps.version.outputs.version_name }}"
