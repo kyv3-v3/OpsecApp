@@ -27,6 +27,7 @@ sealed interface InstallResult {
   data object FdroidLaunched : InstallResult
   data object FdroidMissing : InstallResult
   data object InstallerLaunched : InstallResult
+  data class InstallerLaunchedWithWarning(val message: String) : InstallResult
   data class NeedsUserAction(val message: String, val actionIntent: Intent? = null) : InstallResult
   data class Warning(val message: String) : InstallResult
   data class Error(val message: String) : InstallResult
@@ -109,21 +110,17 @@ class InstallManager(
       return@withContext InstallResult.Error("Downloaded APK package name is missing.")
     }
 
+    val installerWarnings = mutableListOf<String>()
+
     if (!expectedPackageName.isNullOrBlank() && apkPackageName != expectedPackageName) {
-      apkFile.delete()
-      return@withContext InstallResult.Error(
-        "Downloaded APK package '$apkPackageName' does not match expected package '$expectedPackageName'."
-      )
+      installerWarnings += "Downloaded APK package '$apkPackageName' does not match expected package '$expectedPackageName'."
     }
 
     if (!expectedPackageName.isNullOrBlank()
       && expectedPackageName == context.packageName
       && !isSignedWithCurrentPackage(apkPackageInfo)
     ) {
-      apkFile.delete()
-      return@withContext InstallResult.Error(
-        "Downloaded APK is signed with a different certificate than the currently installed app."
-      )
+      installerWarnings += "Downloaded APK is signed with a different certificate than the currently installed app."
     }
 
     link.expectedSha256?.let { expected ->
@@ -166,6 +163,10 @@ class InstallManager(
 
     return@withContext try {
       context.startActivity(installIntent)
+      if (installerWarnings.isNotEmpty()) {
+        return@withContext InstallResult.InstallerLaunchedWithWarning(installerWarnings.joinToString("\n"))
+      }
+
       if (link.expectedSha256 == null && link.expectedSignerSha256 == null) {
         InstallResult.Warning(
           "No expected hash/certificate metadata available for this APK. Verify source before continuing."

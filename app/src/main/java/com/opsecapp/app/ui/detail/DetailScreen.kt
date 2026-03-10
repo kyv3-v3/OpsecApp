@@ -94,6 +94,10 @@ fun DetailScreen(
         InstallResult.FdroidLaunched -> snackbar.showSnackbar(openedFdroid)
         InstallResult.FdroidMissing -> snackbar.showSnackbar(missingFdroid)
         InstallResult.InstallerLaunched -> snackbar.showSnackbar(openedInstaller)
+        is InstallResult.InstallerLaunchedWithWarning -> {
+          snackbar.showSnackbar(openedInstaller)
+          snackbar.showSnackbar(event.message)
+        }
         is InstallResult.Warning -> snackbar.showSnackbar(event.message)
         is InstallResult.Error -> snackbar.showSnackbar(event.message)
         is InstallResult.NeedsUserAction -> snackbar.showSnackbar(event.message)
