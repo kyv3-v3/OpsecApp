@@ -101,7 +101,7 @@ class SettingsViewModelTest {
     )
 
     val installManager = mockk<InstallManager>()
-    coEvery { installManager.downloadVerifyAndInstall(any()) } returns InstallResult.InstallerLaunched
+    coEvery { installManager.downloadVerifyAndInstall(any(), any()) } returns InstallResult.InstallerLaunched
 
     val viewModel = SettingsViewModel(
       settingsRepository = settingsRepository,
@@ -120,7 +120,7 @@ class SettingsViewModelTest {
     advanceUntilIdle()
 
     coVerify(exactly = 1) {
-      installManager.downloadVerifyAndInstall(match { it.url.endsWith("/app.apk") })
+      installManager.downloadVerifyAndInstall(match { it.url.endsWith("/app.apk") }, any())
     }
 
     collector.cancel()
