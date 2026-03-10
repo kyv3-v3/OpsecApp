@@ -41,6 +41,7 @@
   <string name="detail_title">Details</string>
   <string name="detail_item_unavailable">Item unavailable</string>
   <string name="detail_trust_verified">Trust badge: Signed catalog verified</string>
+  <string name="detail_install_direct">Install APK directly</string>
   <string name="detail_install_open_upstream">Install / Open Upstream</string>
   <string name="detail_install_constraints">Install constraints</string>
   <string name="detail_install_constraints_body">Android consumer devices do not permit silent installs/updates for regular apps. The system Package Installer always requires user confirmation.</string>
@@ -66,6 +67,8 @@
   <string name="settings_check_updates">Check app updates</string>
   <string name="settings_latest_release">Latest app release: %1$s%2$s</string>
   <string name="settings_release_published_suffix"> (%1$s)</string>
+  <string name="settings_release_notes">Release notes:</string>
+  <string name="settings_no_apk_asset">This release has no installable APK asset.</string>
   <string name="settings_install_app_update">Install app update</string>
   <string name="settings_open_release_page">Open release page</string>
   <string name="settings_trust_status">Trust status: %1$s</string>

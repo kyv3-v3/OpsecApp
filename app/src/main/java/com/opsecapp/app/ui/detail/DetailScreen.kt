@@ -28,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -69,6 +70,7 @@ fun DetailScreen(
   events: Flow<InstallResult>,
   onBack: () -> Unit,
   onInstallClick: () -> Unit,
+  onInstallDirect: () -> Unit,
   onOpenLink: (String) -> Unit,
   onOpenGithubRepo: () -> Unit,
   onOpenGithubReleases: () -> Unit
@@ -224,8 +226,17 @@ fun DetailScreen(
         }
 
         item {
-          Button(onClick = onInstallClick, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.detail_install_open_upstream))
+          if (selectedItem.hasDirectApkLink) {
+            Button(onClick = onInstallDirect, modifier = Modifier.fillMaxWidth()) {
+              Text(stringResource(R.string.detail_install_direct))
+            }
+            OutlinedButton(onClick = onInstallClick, modifier = Modifier.fillMaxWidth()) {
+              Text(stringResource(R.string.detail_install_open_upstream))
+            }
+          } else {
+            Button(onClick = onInstallClick, modifier = Modifier.fillMaxWidth()) {
+              Text(stringResource(R.string.detail_install_open_upstream))
+            }
           }
         }
 

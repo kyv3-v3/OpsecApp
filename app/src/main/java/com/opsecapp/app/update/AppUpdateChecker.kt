@@ -52,6 +52,7 @@ class AppUpdateChecker(
       .url(latestReleaseApiUrl)
       .get()
       .header("Accept", "application/vnd.github+json")
+      .header("User-Agent", "OpsecApp/$currentVersionName")
       .header("X-GitHub-Api-Version", "2022-11-28")
       .build()
 

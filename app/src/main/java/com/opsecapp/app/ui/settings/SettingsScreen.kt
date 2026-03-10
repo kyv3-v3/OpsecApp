@@ -175,6 +175,7 @@ fun SettingsScreen(
           }
 
           state.availableAppUpdate?.let { update ->
+            val hasApkAsset = !update.apkUrl.isNullOrBlank()
             val publishedSuffix = update.publishedAt?.let {
               stringResource(R.string.settings_release_published_suffix, it)
             }.orEmpty()
@@ -182,9 +183,21 @@ fun SettingsScreen(
             MatrixPulseText(
               text = stringResource(R.string.settings_latest_release, update.tagName, publishedSuffix)
             )
+            update.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+              MatrixPulseText(
+                text = "${stringResource(R.string.settings_release_notes)} ${notes.take(220)}"
+              )
+            }
+            if (!hasApkAsset) {
+              Text(
+                stringResource(R.string.settings_no_apk_asset),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.error
+              )
+            }
             Button(
               onClick = onInstallAppUpdate,
-              enabled = !update.apkUrl.isNullOrBlank(),
+              enabled = hasApkAsset,
               modifier = Modifier.fillMaxWidth()
             ) {
               Text(stringResource(R.string.settings_install_app_update))

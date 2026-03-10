@@ -25,7 +25,8 @@ data class DetailUiState(
   val previewTitle: String = "",
   val previewBadge: String = "",
   val githubRepoUrl: String? = null,
-  val githubReleasesUrl: String? = null
+  val githubReleasesUrl: String? = null,
+  val hasDirectApkLink: Boolean = false
 )
 
 class DetailViewModel(
@@ -54,7 +55,8 @@ class DetailViewModel(
             previewTitle = selected.previewTitle.orEmpty(),
             previewBadge = selected.previewBadge.orEmpty(),
             githubRepoUrl = item?.let(::resolveGithubRepoUrl),
-            githubReleasesUrl = item?.let(::resolveGithubReleasesUrl)
+            githubReleasesUrl = item?.let(::resolveGithubReleasesUrl),
+            hasDirectApkLink = item?.upstreamLinks?.any { it.isDirectApkLink() } == true
           )
         }
       }
@@ -73,16 +75,19 @@ class DetailViewModel(
     val item = state.value.item ?: return
 
     viewModelScope.launch {
-      val fdroidFirst = item.upstreamLinks.firstOrNull { it.type == UpstreamLinkType.FDROID }
-      if (fdroidFirst != null || !item.packageId.isNullOrBlank()) {
-        _events.emit(installManager.launchFdroid(item))
+      val apkLink = resolveDirectApkLink(item)
+      if (apkLink != null) {
+        _events.emit(
+          installManager.downloadVerifyAndInstall(
+            link = apkLink
+          )
+        )
         return@launch
       }
 
-      val apkLink = item.upstreamLinks.firstOrNull { it.isDirectApkLink() }
-
-      if (apkLink != null) {
-        _events.emit(installManager.downloadVerifyAndInstall(apkLink))
+      val fdroidFirst = item.upstreamLinks.firstOrNull { it.type == UpstreamLinkType.FDROID }
+      if (fdroidFirst != null || !item.packageId.isNullOrBlank()) {
+        _events.emit(installManager.launchFdroid(item))
         return@launch
       }
 
@@ -108,6 +113,23 @@ class DetailViewModel(
       } else {
         _events.emit(InstallResult.Error(ERROR_NO_UPSTREAM))
       }
+    }
+  }
+
+  fun installDirectly() {
+    val item = state.value.item ?: return
+    val apkLink = resolveDirectApkLink(item) ?: run {
+      emitWarning(MESSAGE_NO_DIRECT_APK)
+      return
+    }
+
+    viewModelScope.launch {
+      _events.emit(
+        installManager.downloadVerifyAndInstall(
+          link = apkLink,
+          expectedPackageName = item.packageId
+        )
+      )
     }
   }
 
@@ -146,6 +168,16 @@ class DetailViewModel(
     viewModelScope.launch {
       _events.emit(InstallResult.Error(message))
     }
+  }
+
+  private fun emitWarning(message: String) {
+    viewModelScope.launch {
+      _events.emit(InstallResult.Warning(message))
+    }
+  }
+
+  private fun resolveDirectApkLink(item: CatalogItem): UpstreamLink? {
+    return item.upstreamLinks.firstOrNull { it.isDirectApkLink() }
   }
 
   private fun UpstreamLink.isDirectApkLink(): Boolean {
@@ -210,6 +242,8 @@ class DetailViewModel(
       "Opening latest GitHub releases page."
     private const val MESSAGE_PROMPT_INSTALL_FDROID =
       "Install F-Droid from the official website."
+    private const val MESSAGE_NO_DIRECT_APK =
+      "No direct APK link available for this item."
 
     private const val ERROR_NO_UPSTREAM =
       "No upstream link available for this item."

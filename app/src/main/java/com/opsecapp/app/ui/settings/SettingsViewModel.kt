@@ -2,6 +2,7 @@ package com.opsecapp.app.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.opsecapp.app.BuildConfig
 import com.opsecapp.app.install.InstallManager
 import com.opsecapp.app.install.InstallResult
 import com.opsecapp.app.update.AppUpdateCheckResult
@@ -28,7 +29,8 @@ data class AvailableAppUpdate(
   val tagName: String,
   val apkUrl: String?,
   val releasePageUrl: String,
-  val publishedAt: String?
+  val publishedAt: String?,
+  val notes: String? = null
 )
 
 data class SettingsUiState(
@@ -146,15 +148,18 @@ class SettingsViewModel(
     viewModelScope.launch {
       when (val result = appUpdateChecker.checkLatestRelease()) {
         is AppUpdateCheckResult.UpdateAvailable -> {
+          val hasApk = !result.release.apkDownloadUrl.isNullOrBlank()
+          val updateHint = if (hasApk) "" else " (no installable APK asset in this release)"
           operationState.update {
             it.copy(
               isCheckingAppUpdate = false,
-              statusMessage = "Update available: ${result.release.tagName}",
+              statusMessage = "Update available: ${result.release.tagName}$updateHint",
               availableAppUpdate = AvailableAppUpdate(
                 tagName = result.release.tagName,
                 apkUrl = result.release.apkDownloadUrl,
                 releasePageUrl = result.release.htmlUrl,
-                publishedAt = result.release.publishedAt
+                publishedAt = result.release.publishedAt,
+                notes = result.release.notes
               )
             )
           }
@@ -201,7 +206,8 @@ class SettingsViewModel(
           type = UpstreamLinkType.GITHUB,
           url = apkUrl,
           labelExact = "GitHub Release APK"
-        )
+        ),
+        expectedPackageName = BuildConfig.APPLICATION_ID
       )
       _events.emit(result)
     }

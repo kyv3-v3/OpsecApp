@@ -3,9 +3,12 @@ package com.opsecapp.app.install
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import com.opsecapp.app.BuildConfig
 import androidx.core.content.FileProvider
 import com.opsecapp.domain.model.CatalogItem
 import com.opsecapp.domain.model.UpstreamLink
@@ -18,6 +21,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
+import java.security.MessageDigest
 
 sealed interface InstallResult {
   data object FdroidLaunched : InstallResult
@@ -69,7 +73,8 @@ class InstallManager(
   }
 
   suspend fun downloadVerifyAndInstall(
-    link: UpstreamLink
+    link: UpstreamLink,
+    expectedPackageName: String? = null
   ): InstallResult = withContext(Dispatchers.IO) {
     val parsed = runCatching { Uri.parse(link.url) }.getOrNull()
       ?: return@withContext InstallResult.Error("Invalid install URL")
@@ -87,6 +92,38 @@ class InstallManager(
       downloadFile(link.url, apkFile)
     } catch (error: IOException) {
       return@withContext InstallResult.Error("Download failed: ${error.message}")
+    }
+
+    val apkPackageInfo = runCatching {
+      readPackageInfo(apkFile)
+    }.getOrNull()
+
+    if (apkPackageInfo == null) {
+      apkFile.delete()
+      return@withContext InstallResult.Error("Downloaded file is not a valid APK package.")
+    }
+
+    val apkPackageName = apkPackageInfo.packageName
+    if (apkPackageName.isNullOrBlank()) {
+      apkFile.delete()
+      return@withContext InstallResult.Error("Downloaded APK package name is missing.")
+    }
+
+    if (!expectedPackageName.isNullOrBlank() && apkPackageName != expectedPackageName) {
+      apkFile.delete()
+      return@withContext InstallResult.Error(
+        "Downloaded APK package '$apkPackageName' does not match expected package '$expectedPackageName'."
+      )
+    }
+
+    if (!expectedPackageName.isNullOrBlank()
+      && expectedPackageName == context.packageName
+      && !isSignedWithCurrentPackage(apkPackageInfo)
+    ) {
+      apkFile.delete()
+      return@withContext InstallResult.Error(
+        "Downloaded APK is signed with a different certificate than the currently installed app."
+      )
     }
 
     link.expectedSha256?.let { expected ->
@@ -136,8 +173,15 @@ class InstallManager(
       } else {
         InstallResult.InstallerLaunched
       }
+    } catch (_: SecurityException) {
+      apkFile.delete()
+      InstallResult.Error("Installer permissions are missing on this device.")
     } catch (_: ActivityNotFoundException) {
+      apkFile.delete()
       InstallResult.Error("No package installer available on this device.")
+    } catch (_: Exception) {
+      apkFile.delete()
+      InstallResult.Error("Unable to launch package installer.")
     }
   }
 
@@ -154,14 +198,21 @@ class InstallManager(
   }
 
   private fun downloadFile(url: String, destination: File) {
-    val request = Request.Builder().url(url).get().build()
+    val request = Request.Builder()
+      .url(url)
+      .get()
+      .header("User-Agent", "OpsecApp/${BuildConfig.VERSION_NAME}")
+      .build()
     client.newCall(request).execute().use { response ->
       if (!response.isSuccessful) {
         throw IOException("HTTP ${response.code}")
       }
       val body = response.body ?: throw IOException("Empty response body")
       destination.outputStream().use { output ->
-        body.byteStream().copyTo(output)
+        val bytesCopied = body.byteStream().copyTo(output)
+        if (bytesCopied <= 0L) {
+          throw IOException("Downloaded APK is empty.")
+        }
       }
     }
   }
@@ -170,6 +221,51 @@ class InstallManager(
     if (url.isNullOrBlank()) return null
     val match = FDROID_PACKAGE_REGEX.find(url) ?: return null
     return match.groupValues.getOrNull(1)?.takeIf { it.isNotBlank() }
+  }
+
+  private fun readPackageInfo(apkFile: File): PackageInfo? {
+    val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      PackageManager.GET_SIGNING_CERTIFICATES
+    } else {
+      PackageManager.GET_SIGNATURES
+    }
+    return context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, flags)
+  }
+
+  private fun isSignedWithCurrentPackage(candidatePackageInfo: PackageInfo): Boolean {
+    val installedPackageInfo = getInstalledPackageInfo() ?: return false
+    val installedSignatures = signaturesForPackage(installedPackageInfo)
+    if (installedSignatures.isEmpty()) return false
+
+    val candidateSignatures = signaturesForPackage(candidatePackageInfo)
+    if (candidateSignatures.isEmpty()) return false
+
+    return installedSignatures.intersect(candidateSignatures).isNotEmpty()
+  }
+
+  private fun getInstalledPackageInfo(): PackageInfo? {
+    val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      PackageManager.GET_SIGNING_CERTIFICATES
+    } else {
+      PackageManager.GET_SIGNATURES
+    }
+    return runCatching {
+      context.packageManager.getPackageInfo(context.packageName, flags)
+    }.getOrNull()
+  }
+
+  private fun signaturesForPackage(packageInfo: PackageInfo): Set<String> {
+    val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      packageInfo.signingInfo?.apkContentsSigners
+    } else {
+      packageInfo.signatures
+    } ?: return emptySet()
+
+    return signatures.map { signature ->
+      MessageDigest.getInstance("SHA-256")
+        .digest(signature.toByteArray())
+        .joinToString(separator = "") { b -> "%02x".format(b.toInt() and 0xFF) }
+    }.toSet()
   }
 
   companion object {

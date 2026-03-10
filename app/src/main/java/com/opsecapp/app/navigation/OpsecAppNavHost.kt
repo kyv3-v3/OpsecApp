@@ -183,6 +183,7 @@ fun OpsecAppNavHost(container: AppContainer) {
         events = vm.events,
         onBack = navController::popBackStack,
         onInstallClick = vm::installPreferred,
+        onInstallDirect = vm::installDirectly,
         onOpenLink = vm::openUpstreamLink,
         onOpenGithubRepo = vm::openGithubRepository,
         onOpenGithubReleases = vm::openGithubReleases
